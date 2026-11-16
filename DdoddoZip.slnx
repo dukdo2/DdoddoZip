@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DdoddoZip.Cli/DdoddoZip.Cli.csproj" />
+    <Project Path="src/DdoddoZip.Core/DdoddoZip.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DdoddoZip.Tests/DdoddoZip.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>DdoddoZip.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DdoddoZip.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Official, unmodified 7-Zip engine (LGPL). Copied next to every app that references Core. -->
+    <None Include="..\..\third_party\7zip\7z.dll" Link="7z.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\third_party\7zip\License.txt" Link="7zip-License.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

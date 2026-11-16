@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- 7z.dll is 64-bit, so every process that loads it must be x64. -->
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Keep bin/obj outside the OneDrive folder so build output is not synced. -->
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <ArtifactsPath>$(LOCALAPPDATA)\DdoddoZip.build</ArtifactsPath>
+    <Company>DdoddoZip</Company>
+    <Product>또또집 (DdoddoZip)</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>
