@@ -1,0 +1,27 @@
+<Window x:Class="DdoddoZip.App.Views.ErrorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="500">
+    <StackPanel Margin="20,16">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource Danger}" VerticalAlignment="Top" Margin="0,0,12,0">
+                <TextBlock Text="!" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1">
+                <TextBlock x:Name="Headline" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock x:Name="Advice" Style="{StaticResource SubText}" FontSize="13" TextWrapping="Wrap" Margin="0,4,0,0" />
+            </StackPanel>
+        </Grid>
+        <TextBox x:Name="Details" Visibility="Collapsed" IsReadOnly="True" Height="160" Margin="0,12,0,0"
+                 TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                 FontFamily="Consolas, Malgun Gothic" FontSize="12" VerticalContentAlignment="Top" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="DetailsButton" Content="자세히 ▾" Click="Details_Click" />
+            <Button Content="확인" Style="{StaticResource PrimaryButton}" IsDefault="True" IsCancel="True" Margin="8,0,0,0" Click="Ok_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

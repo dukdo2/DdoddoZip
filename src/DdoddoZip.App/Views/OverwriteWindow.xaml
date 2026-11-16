@@ -1,0 +1,35 @@
+<Window x:Class="DdoddoZip.App.Views.OverwriteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Title="같은 이름의 파일이 있습니다" Width="480">
+    <StackPanel Margin="20,16">
+        <TextBlock x:Name="FileName" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+        <Grid Margin="0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="OldCard" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                <StackPanel>
+                    <TextBlock x:Name="OldLabel" Text="지금 있는 파일" Style="{StaticResource SubText}" />
+                    <TextBlock x:Name="OldSize" FontWeight="SemiBold" Margin="0,2" />
+                    <TextBlock x:Name="OldDate" Style="{StaticResource SubText}" />
+                </StackPanel>
+            </Border>
+            <Border x:Name="NewCard" Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                <StackPanel>
+                    <TextBlock x:Name="NewLabel" Text="압축 파일 안의 파일" Style="{StaticResource SubText}" />
+                    <TextBlock x:Name="NewSize" FontWeight="SemiBold" Margin="0,2" />
+                    <TextBlock x:Name="NewDate" Style="{StaticResource SubText}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <CheckBox x:Name="ApplyAll" Content="나머지 파일에도 모두 적용" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="덮어쓰기" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="Overwrite_Click" />
+            <Button Content="건너뛰기" Margin="8,0,0,0" Click="Skip_Click" />
+            <Button Content="이름 바꾸기" Margin="8,0,0,0" Click="Rename_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

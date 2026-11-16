@@ -1,0 +1,4 @@
+LIBRARY "DdoddoZip.ShellExt.dll"
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

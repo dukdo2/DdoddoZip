@@ -1,0 +1,165 @@
+﻿<Window x:Class="DdoddoZip.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:DdoddoZip.App.ViewModels"
+        Style="{StaticResource AppWindow}"
+        Title="또또집" Width="960" Height="600" MinWidth="720" MinHeight="440"
+        WindowStartupLocation="CenterScreen" AllowDrop="True"
+        DragOver="Window_DragOver" Drop="Window_Drop">
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{x:Static ApplicationCommands.Open}" />
+        <KeyBinding Key="Back" Command="{x:Static NavigationCommands.BrowseBack}" />
+    </Window.InputBindings>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static ApplicationCommands.Open}" Executed="Open_Click" />
+        <CommandBinding Command="{x:Static NavigationCommands.BrowseBack}" Executed="Back_Click" />
+    </Window.CommandBindings>
+
+    <Grid>
+        <!-- S1: empty state -->
+        <Grid x:Name="EmptyView">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Border Margin="24,24,24,12" BorderBrush="{StaticResource DropLine}" BorderThickness="2" CornerRadius="12"
+                    Background="{StaticResource DropBg}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="⇩" FontSize="40" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" />
+                    <TextBlock Text="압축할 파일이나 열 압축 파일을 여기에 끌어다 놓으세요" Margin="0,8,0,14" HorizontalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="압축 파일 열기" Style="{StaticResource PrimaryButton}" Click="Open_Click" />
+                        <Button Content="새로 압축하기" Margin="8,0,0,0" Click="NewArchive_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <StackPanel Grid.Row="1" Margin="24,0,24,20" x:Name="RecentPanel">
+                <TextBlock Text="최근에 연 압축 파일" Style="{StaticResource SubText}" Margin="0,0,0,4" />
+                <ItemsControl x:Name="RecentList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource LinkRow}" Click="Recent_Click" Tag="{Binding Path}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Detail}" Style="{StaticResource SubText}"
+                                               HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+
+        <!-- S2: archive view -->
+        <DockPanel x:Name="ArchiveView" Visibility="Collapsed">
+            <!-- toolbar -->
+            <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="8,6">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource ToolButton}" Click="Open_Click" ToolTip="압축 파일 열기 (Ctrl+O)">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="▤" /></Border><TextBlock Text="열기" /></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Click="Extract_Click" ToolTip="풀 위치를 골라 풀기">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="⇪" /></Border><TextBlock Text="풀기" /></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Click="ExtractHere_Click" ToolTip="압축 파일이 있는 폴더에 바로 풀기">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="↧" /></Border><TextBlock Text="여기에 풀기" /></StackPanel>
+                    </Button>
+                    <Rectangle Width="1" Fill="{StaticResource Line}" Margin="6,4" />
+                    <Button Style="{StaticResource ToolButton}" Click="NewArchive_Click" ToolTip="새 압축 파일 만들기">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="＋" /></Border><TextBlock Text="압축하기" /></StackPanel>
+                    </Button>
+                    <Rectangle Width="1" Fill="{StaticResource Line}" Margin="6,4" />
+                    <Button x:Name="EncodingButton" Style="{StaticResource ToolButton}" Click="Encoding_Click" ToolTip="ZIP 파일 이름이 깨져 보일 때 바꿔 보세요">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="가" /></Border><TextBlock Text="파일명 인코딩 ▾" /></StackPanel>
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="EncodingMenu">
+                                <MenuItem Header="자동" Tag="0" Click="EncodingItem_Click" />
+                                <Separator />
+                                <MenuItem Header="한국어 (CP949)" Tag="949" Click="EncodingItem_Click" />
+                                <MenuItem Header="유니코드 (UTF-8)" Tag="65001" Click="EncodingItem_Click" />
+                                <MenuItem Header="일본어 (Shift-JIS)" Tag="932" Click="EncodingItem_Click" />
+                                <MenuItem Header="중국어 간체 (GBK)" Tag="936" Click="EncodingItem_Click" />
+                                <MenuItem Header="중국어 번체 (Big5)" Tag="950" Click="EncodingItem_Click" />
+                                <MenuItem Header="서유럽 (CP437)" Tag="437" Click="EncodingItem_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- address bar -->
+            <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="10,6">
+                <DockPanel>
+                    <Button x:Name="BackButton" Style="{StaticResource ToolButton}" Padding="8,2" Content="←" Click="Back_Click" ToolTip="뒤로 (Backspace)" />
+                    <Button x:Name="UpButton" Style="{StaticResource ToolButton}" Padding="8,2" Content="↑" Click="Up_Click" ToolTip="위로" />
+                    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="6,0,0,0">
+                        <TextBlock x:Name="AddressText" TextTrimming="CharacterEllipsis" />
+                    </Border>
+                </DockPanel>
+            </Border>
+
+            <!-- status bar -->
+            <Border DockPanel.Dock="Bottom" Background="{StaticResource Pane}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="10,5">
+                <DockPanel>
+                    <TextBlock x:Name="SelectionText" DockPanel.Dock="Right" Style="{StaticResource SubText}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="FormatText" Style="{StaticResource SubText}" Margin="0,0,16,0" />
+                        <TextBlock x:Name="CountText" Style="{StaticResource SubText}" Margin="0,0,16,0" />
+                        <TextBlock x:Name="RatioText" Style="{StaticResource SubText}" Margin="0,0,16,0" />
+                        <Border x:Name="EncodingTag" Background="{StaticResource AccentLight}" CornerRadius="4" Padding="6,0" Margin="0,0,16,0">
+                            <TextBlock x:Name="EncodingText" Foreground="{StaticResource AccentDark}" FontSize="12" />
+                        </Border>
+                        <TextBlock x:Name="CryptText" Style="{StaticResource SubText}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- tree + list -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" MinWidth="120" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TreeView x:Name="FolderTree" Background="{StaticResource Pane}" BorderThickness="0" Padding="4,6"
+                          SelectedItemChanged="FolderTree_SelectedItemChanged">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type vm:FolderNode}" ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+                <GridSplitter Grid.Column="1" Width="1" Background="{StaticResource Line}" HorizontalAlignment="Stretch" />
+                <DataGrid x:Name="FileList" Grid.Column="2" Style="{StaticResource FileGrid}" IsSynchronizedWithCurrentItem="False"
+                          MouseDoubleClick="FileList_DoubleClick" KeyDown="FileList_KeyDown"
+                          SelectionChanged="FileList_SelectionChanged" Sorting="FileList_Sorting"
+                          PreviewMouseLeftButtonDown="FileList_PreviewMouseDown" PreviewMouseMove="FileList_PreviewMouseMove">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="이름" Width="*" SortMemberPath="Name" CanUserSort="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="크기" Width="90" Binding="{Binding SizeText}" SortMemberPath="Size" ElementStyle="{StaticResource RightCell}" />
+                        <DataGridTextColumn Header="압축 크기" Width="90" Binding="{Binding PackedText}" SortMemberPath="PackedSize" ElementStyle="{StaticResource RightCell}" />
+                        <DataGridTextColumn Header="종류" Width="120" Binding="{Binding TypeName}" SortMemberPath="TypeName" />
+                        <DataGridTextColumn Header="수정한 날짜" Width="130" Binding="{Binding ModifiedText}" SortMemberPath="Modified" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>
