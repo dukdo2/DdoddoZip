@@ -11,12 +11,22 @@ public static class Compressor
     public static CompressResult QuickZip(
         IReadOnlyList<string> sources,
         IProgress<ArchiveProgress>? progress = null,
+        CancellationToken ct = default) => QuickArchive(sources, ArchiveKind.Zip, progress, ct);
+
+    /// <summary>
+    /// Right-click quick compress in any format: the archive goes next to the selected items,
+    /// named after them, never replacing an existing file.
+    /// </summary>
+    public static CompressResult QuickArchive(
+        IReadOnlyList<string> sources,
+        ArchiveKind kind,
+        IProgress<ArchiveProgress>? progress = null,
         CancellationToken ct = default)
     {
         var first = Path.TrimEndingDirectorySeparator(Path.GetFullPath(sources[0]));
         var dir = Path.GetDirectoryName(first) ?? first;
-        var dest = NamePolicy.GetUniquePath(dir, NamePolicy.QuickArchiveBaseName(sources), ".zip");
-        return Compress(sources, dest, new CompressOptions(), progress, ct);
+        var dest = NamePolicy.GetUniquePath(dir, NamePolicy.QuickArchiveBaseName(sources), ArchiveKindInfo.Extension(kind));
+        return Compress(sources, dest, new CompressOptions { Kind = kind }, progress, ct);
     }
 
     /// <summary>

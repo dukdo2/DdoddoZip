@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+    <!-- Icon for archive file types (file association); must be a loose file next to the exe. -->
+    <Content Include="Assets\archive.ico" Link="archive.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

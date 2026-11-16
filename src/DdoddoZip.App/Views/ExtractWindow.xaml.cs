@@ -23,7 +23,7 @@ public partial class ExtractWindow : Window
     {
         var w = new ExtractWindow();
         if (owner is { IsVisible: true }) w.Owner = owner;
-        else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        else { w.WindowStartupLocation = WindowStartupLocation.CenterScreen; w.ShowInTaskbar = true; }
 
         w.FolderBox.Text = Path.GetDirectoryName(archivePath) ?? "";
         var folderName = NamePolicy.ArchiveBaseName(archivePath);

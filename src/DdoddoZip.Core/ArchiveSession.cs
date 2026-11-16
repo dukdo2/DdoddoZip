@@ -28,6 +28,9 @@ public sealed class ArchiveSession : IDisposable
 
     public bool HasEncryptedEntries => Entries.Any(e => e.IsEncrypted);
 
+    /// <summary>Password that worked so far (given or typed), so a reopened session need not ask again.</summary>
+    public string? Password => _password;
+
     public ulong TotalSize => Entries.Aggregate(0UL, (sum, e) => sum + e.Size);
 
     private ArchiveSession(string path) => ArchivePath = path;

@@ -23,7 +23,7 @@ public partial class CompressWindow : Window
     {
         var w = new CompressWindow();
         if (owner is { IsVisible: true }) w.Owner = owner;
-        else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        else { w.WindowStartupLocation = WindowStartupLocation.CenterScreen; w.ShowInTaskbar = true; }
         w.ShowInTaskbar = w.Owner is null;
 
         var settings = AppSettings.Current;

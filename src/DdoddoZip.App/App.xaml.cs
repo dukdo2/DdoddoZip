@@ -11,7 +11,7 @@ namespace DdoddoZip.App;
 ///   DdoddoZip.exe                          → main window (S1)
 ///   DdoddoZip.exe &lt;archive&gt;                → open it (S2)
 ///   DdoddoZip.exe &lt;files...&gt;               → compress window (S3)
-///   DdoddoZip.exe --quickzip --list &lt;file&gt;  → right-click "○○.zip으로 압축하기" (S5 only)
+///   DdoddoZip.exe --quickzip --list &lt;file&gt;  → right-click commands, see ShellCommandRunner
 ///   DdoddoZip.exe --register-shell / --unregister-shell [--user]   (default: all users, needs admin)
 /// </summary>
 public partial class App : Application
@@ -40,8 +40,8 @@ public partial class App : Application
                     ShellIntegration.Unregister(machine: !args.Contains("--user"));
                     Shutdown(0);
                     return;
-                case "--quickzip":
-                    RunQuickZip(args[1..]);
+                case var command when ShellCommandRunner.IsShellCommand(command):
+                    RunShellCommand(command!, args[1..]);
                     return;
             }
         }
@@ -64,34 +64,15 @@ public partial class App : Application
             main.StartCompress(paths);
     }
 
-    private async void RunQuickZip(string[] args)
+    private async void RunShellCommand(string command, string[] args)
     {
-        var sources = new List<string>();
-        for (int i = 0; i < args.Length; i++)
+        try
         {
-            if (args[i] == "--list" && i + 1 < args.Length)
-            {
-                var list = args[++i];
-                try
-                {
-                    sources.AddRange(File.ReadAllLines(list, Encoding.UTF8).Where(l => !string.IsNullOrWhiteSpace(l)));
-                    File.Delete(list);
-                }
-                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
-            }
-            else
-            {
-                sources.Add(args[i]);
-            }
+            await ShellCommandRunner.RunAsync(command, args);
         }
-
-        if (sources.Count > 0)
+        catch (Exception ex)
         {
-            var title = NamePolicy.QuickArchiveBaseName(sources) + ".zip 압축 중";
-            var result = await Operation.RunAsync(null, title,
-                (p, _, ct) => Compressor.QuickZip(sources, p, ct), "압축하지 못했습니다");
-            if (result is not null)
-                ShellNative.SelectInExplorer(result.OutputPath);
+            ErrorWindow.ShowException(null, ex);
         }
         Shutdown(0);
     }

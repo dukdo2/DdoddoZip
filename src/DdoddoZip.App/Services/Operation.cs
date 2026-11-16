@@ -70,11 +70,13 @@ public static class Operation
 }
 
 /// <summary>Asks the person through dialogs; safe to call from the worker thread.</summary>
-public sealed class WpfInteraction(Window owner) : IArchiveInteraction
+public sealed class WpfInteraction(Window? owner) : IArchiveInteraction
 {
+    private System.Windows.Threading.Dispatcher Ui => owner?.Dispatcher ?? Application.Current.Dispatcher;
+
     public string? AskPassword(string archivePath, bool previousWasWrong) =>
-        owner.Dispatcher.Invoke(() => PasswordWindow.Ask(owner, archivePath, previousWasWrong));
+        Ui.Invoke(() => PasswordWindow.Ask(owner, archivePath, previousWasWrong));
 
     public OverwriteDecision AskOverwrite(OverwriteRequest request) =>
-        owner.Dispatcher.Invoke(() => OverwriteWindow.Ask(owner, request));
+        Ui.Invoke(() => OverwriteWindow.Ask(owner, request));
 }

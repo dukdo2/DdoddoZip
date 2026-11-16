@@ -16,7 +16,7 @@ public partial class PasswordWindow : Window
     {
         var w = new PasswordWindow();
         if (owner is { IsVisible: true }) w.Owner = owner;
-        else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        else { w.WindowStartupLocation = WindowStartupLocation.CenterScreen; w.ShowInTaskbar = true; }
         w.FileName.Text = Path.GetFileName(archivePath);
         w.WrongText.Visibility = previousWasWrong ? Visibility.Visible : Visibility.Collapsed;
         w.Loaded += (_, _) => w.Hidden.Focus();

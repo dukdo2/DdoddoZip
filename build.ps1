@@ -16,7 +16,7 @@ if (-not $vs) { throw 'Visual Studio C++ tools not found (Desktop development wi
 $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
 $src = Join-Path $root 'src\DdoddoZip.ShellExt'
 $cl = "cl /nologo /O2 /MT /EHsc /std:c++17 /utf-8 /W4 /wd4324 /permissive- /DUNICODE /D_UNICODE /LD " +
-      "`"$src\QuickZipCommand.cpp`" /Fo`"$obj\\`" /link /DEF:`"$src\exports.def`" " +
+      "`"$src\ShellCommands.cpp`" /Fo`"$obj\\`" /link /DEF:`"$src\exports.def`" " +
       "/OUT:`"$obj\DdoddoZip.ShellExt.dll`" /IMPLIB:`"$obj\DdoddoZip.ShellExt.lib`" shlwapi.lib ole32.lib shell32.lib runtimeobject.lib"
 Push-Location $obj   # keep any compiler side files out of the caller's folder
 try { cmd /c "`"$vcvars`" >nul 2>nul && $cl" } finally { Pop-Location }

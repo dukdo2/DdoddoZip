@@ -18,7 +18,7 @@ public partial class OverwriteWindow : Window
     {
         var w = new OverwriteWindow();
         if (owner is { IsVisible: true }) w.Owner = owner;
-        else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        else { w.WindowStartupLocation = WindowStartupLocation.CenterScreen; w.ShowInTaskbar = true; }
 
         w.FileName.Text = Path.GetFileName(r.ExistingPath);
         w.OldSize.Text = Fmt.Bytes((ulong)r.ExistingSize);
