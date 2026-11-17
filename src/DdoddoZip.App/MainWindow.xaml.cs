@@ -270,6 +270,24 @@ public partial class MainWindow : Window
         }, AppSettings.Current.OpenFolderAfterExtract);
     }
 
+    /// <summary>F15: reads every file and checks it without writing anything.</summary>
+    private async void Test_Click(object sender, RoutedEventArgs e)
+    {
+        if (_session is null) return;
+        var session = _session;
+        var name = Path.GetFileName(session.ArchivePath);
+        var result = await Operation.RunAsync(this, $"{name} 검사 중",
+            (p, ia, ct) => session.Test(ia, p, ct), "검사를 끝내지 못했습니다");
+        if (result is null) return;
+
+        var total = session.Entries.Count(x => !x.IsDirectory);
+        if (result.HasProblems)
+            ErrorWindow.ShowProblems(this, "검사 결과", result, total);
+        else
+            MessageBox.Show(this, $"이상 없습니다.\n파일 {result.FilesTested:N0}개를 모두 확인했습니다.", "검사 결과",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     /// <summary>Selected rows, or the whole archive when nothing is selected.</summary>
     private (IReadOnlyCollection<int>? Indices, string? BaseFolder, List<ArchiveEntry> Entries) CurrentSelection()
     {

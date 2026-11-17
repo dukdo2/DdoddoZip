@@ -69,6 +69,9 @@
                     <Button Style="{StaticResource ToolButton}" Click="ExtractHere_Click" ToolTip="압축 파일이 있는 폴더에 바로 풀기">
                         <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="↧" /></Border><TextBlock Text="여기에 풀기" /></StackPanel>
                     </Button>
+                    <Button Style="{StaticResource ToolButton}" Click="Test_Click" ToolTip="파일을 풀지 않고 손상 여부만 검사">
+                        <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="✓" /></Border><TextBlock Text="검사" /></StackPanel>
+                    </Button>
                     <Rectangle Width="1" Fill="{StaticResource Line}" Margin="6,4" />
                     <Button Style="{StaticResource ToolButton}" Click="NewArchive_Click" ToolTip="새 압축 파일 만들기">
                         <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="＋" /></Border><TextBlock Text="압축하기" /></StackPanel>

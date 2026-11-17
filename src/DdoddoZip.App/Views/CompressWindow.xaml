@@ -46,6 +46,28 @@
             </UniformGrid>
         </Border>
 
+        <!-- F13: password -->
+        <CheckBox x:Name="UsePassword" Content="암호 걸기" Margin="0,14,0,0" Checked="UsePassword_Changed" Unchecked="UsePassword_Changed" />
+        <StackPanel x:Name="PasswordPanel" Visibility="Collapsed" Margin="22,6,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="암호" Style="{StaticResource FieldLabel}" />
+                    <PasswordBox x:Name="Password1" PasswordChanged="Password_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="암호 확인" Style="{StaticResource FieldLabel}" />
+                    <PasswordBox x:Name="Password2" PasswordChanged="Password_Changed" />
+                </StackPanel>
+            </Grid>
+            <CheckBox x:Name="EncryptNames" Content="파일 이름도 숨기기 (7Z만 가능)" Margin="0,8,0,0" />
+            <TextBlock x:Name="PasswordHint" Style="{StaticResource SubText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+        </StackPanel>
+
         <Border Style="{StaticResource Note}" Margin="0,14,0,0">
             <TextBlock x:Name="SummaryText" Style="{StaticResource SubText}" Text="담길 파일을 세는 중…" />
         </Border>

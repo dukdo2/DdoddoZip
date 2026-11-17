@@ -81,7 +81,48 @@ public partial class CompressWindow : Window
             bool hasLevel = kind != ArchiveKind.Tar; // plain TAR does not compress
             LevelBox.IsEnabled = hasLevel;
             LevelBox.Opacity = hasLevel ? 1 : 0.4;
+            UpdatePasswordUi();
         }
+    }
+
+    // Only ZIP and 7Z can be encrypted; ZIP passwords must be English letters, digits and symbols.
+    private static bool CanEncrypt(ArchiveKind kind) => kind is ArchiveKind.Zip or ArchiveKind.SevenZip;
+
+    private static bool IsAsciiPassword(string pw) => pw.All(c => c is >= ' ' and <= '~');
+
+    private void UsePassword_Changed(object sender, RoutedEventArgs e)
+    {
+        UpdatePasswordUi();
+        if (UsePassword.IsChecked == true) Password1.Focus();
+    }
+
+    private void Password_Changed(object sender, RoutedEventArgs e) => UpdatePasswordUi();
+
+    private void UpdatePasswordUi()
+    {
+        if (UsePassword is null) return; // during InitializeComponent
+        bool can = CanEncrypt(_kind);
+        UsePassword.IsEnabled = can;
+        UsePassword.Content = can ? "암호 걸기" : "암호 걸기 (ZIP, 7Z만 가능)";
+        if (!can) UsePassword.IsChecked = false;
+        PasswordPanel.Visibility = UsePassword.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        EncryptNames.IsEnabled = _kind == ArchiveKind.SevenZip;
+        if (_kind != ArchiveKind.SevenZip) EncryptNames.IsChecked = false;
+
+        var pw = Password1.Password;
+        string hint;
+        if (_kind == ArchiveKind.Zip && pw.Length > 0 && !IsAsciiPassword(pw))
+            hint = "ZIP 암호에는 영문, 숫자, 기호만 쓸 수 있습니다. 한글 암호는 7Z를 고르세요.";
+        else if (Password2.Password.Length > 0 && Password2.Password != pw)
+            hint = "두 암호가 다릅니다.";
+        else if (_kind == ArchiveKind.Zip)
+            hint = "ZIP은 AES-256으로 암호화합니다. 파일 이름은 암호 없이도 보입니다.";
+        else
+            hint = "7Z는 AES-256으로 암호화합니다.";
+        PasswordHint.Text = hint;
+        PasswordHint.Foreground = hint.StartsWith("ZIP 암호에는") || hint.StartsWith("두 암호")
+            ? (System.Windows.Media.Brush)Application.Current.Resources["Danger"]
+            : (System.Windows.Media.Brush)Application.Current.Resources["Sub"];
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)
@@ -110,6 +151,23 @@ public partial class CompressWindow : Window
             return;
         }
 
+        string? password = null;
+        if (UsePassword.IsChecked == true && CanEncrypt(_kind))
+        {
+            password = Password1.Password;
+            string? problem =
+                password.Length == 0 ? "암호를 입력해 주세요." :
+                password != Password2.Password ? "두 암호가 다릅니다. 다시 확인해 주세요." :
+                _kind == ArchiveKind.Zip && !IsAsciiPassword(password) ? "ZIP 암호에는 영문, 숫자, 기호만 쓸 수 있습니다.\n한글 암호를 쓰려면 형식을 7Z로 바꿔 주세요." :
+                null;
+            if (problem is not null)
+            {
+                MessageBox.Show(this, problem, "압축하기", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Password1.Focus();
+                return;
+            }
+        }
+
         var dest = Path.Combine(folder, name + ext);
         if (File.Exists(dest))
         {
@@ -123,7 +181,13 @@ public partial class CompressWindow : Window
         AppSettings.Current.LastLevel = level.ToString();
         AppSettings.Current.Save();
 
-        _result = new CompressRequest(dest, new CompressOptions { Kind = _kind, Level = level });
+        _result = new CompressRequest(dest, new CompressOptions
+        {
+            Kind = _kind,
+            Level = level,
+            Password = password,
+            EncryptFileNames = password is not null && EncryptNames.IsChecked == true,
+        });
         Close();
     }
 }

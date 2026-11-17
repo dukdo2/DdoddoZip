@@ -255,7 +255,7 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
                     ApplyMetadata(path, entry);
                     _result.FilesWritten++;
                 }
-                else if (state == ItemState.Testing)
+                else if (state == ItemState.Testing && !entry.IsDirectory)
                 {
                     _result.FilesTested++;
                 }

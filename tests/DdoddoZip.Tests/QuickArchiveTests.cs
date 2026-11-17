@@ -17,7 +17,9 @@ public class QuickArchiveTests
 
         using var session = ArchiveSession.Open(first.OutputPath);
         Assert.Equal("7Z", session.FormatName);
-        Assert.False(session.Test().HasProblems);
+        var test = session.Test();
+        Assert.False(test.HasProblems);
+        Assert.Equal(4, test.FilesTested); // files only, folders are not counted
     }
 
     [Fact]
