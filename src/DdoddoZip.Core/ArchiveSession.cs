@@ -66,6 +66,8 @@ public sealed class ArchiveSession : IDisposable
         _archive = archive;
         _stream = stream;
         FormatName = DisplayFormat(format.Name);
+        if (!format.Name.Equals("zip", StringComparison.OrdinalIgnoreCase))
+            NameEncoding = null; // ZIP was only tried on the way to the real format
 
         // "a.tar.gz": the gzip holds a single .tar, so open that tar to show the real file list.
         if (StreamFormats.Contains(format.Name) && HoldsSingleTar(archive, ArchivePath))
@@ -181,11 +183,14 @@ public sealed class ArchiveSession : IDisposable
         var plan = new Dictionary<uint, (ArchiveEntry, string)> { [0] = (entry, temp) };
         var result = new ExtractResult();
         var cb = new ExtractCallback("", plan, false, OverwriteMode.Overwrite, null, null, null, result, ct);
-        int hr = archive.Extract([0u], 1, 0, cb);
+        int hr;
+        try { hr = archive.Extract([0u], 1, 0, cb); }
+        finally { cb.FinishWrites(); }
         if (hr != HResult.S_OK || result.Failures.Count > 0 || cb.FatalError is not null)
         {
-            try { File.Delete(temp); } catch (IOException) { }
+            try { File.Delete(temp); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             if (hr == HResult.E_ABORT) throw new OperationCanceledException(ct);
+            if (cb.FatalError is ArchiveException fatal) throw fatal; // e.g. no space left in the temp folder
             throw new ArchiveException(ArchiveErrorKind.Corrupted,
                 result.Failures.FirstOrDefault()?.Message ?? "압축 파일 안의 TAR를 꺼내지 못했습니다.", cb.FatalError);
         }
@@ -318,7 +323,9 @@ public sealed class ArchiveSession : IDisposable
         {
             ct.ThrowIfCancellationRequested();
             var cb = new ExtractCallback(ArchivePath, plan, testMode, overwrite, password, interaction, progress, result, ct);
-            int hr = archive.Extract(indices, (uint)indices.Length, testMode ? 1 : 0, cb);
+            int hr;
+            try { hr = archive.Extract(indices, (uint)indices.Length, testMode ? 1 : 0, cb); }
+            finally { cb.FinishWrites(); } // every file closed before results are read
             directories.AddRange(cb.Directories);
 
             if (cb.UserCancelled || hr == HResult.E_ABORT || ct.IsCancellationRequested)

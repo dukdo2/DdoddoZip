@@ -84,7 +84,7 @@ public partial class ProgressWindow : Window, IProgress<ArchiveProgress>
     private void AskCancel()
     {
         if (_cancelRequested) return;
-        var answer = MessageBox.Show(this, "작업을 취소할까요?\n만들던 압축 파일은 지워집니다.", "또또집",
+        var answer = MessageBox.Show(this, "작업을 취소할까요?\n압축 중이면 만들던 압축 파일은 지워지고, 푸는 중이면 이미 푼 파일은 남습니다.", "또또집",
             MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
         if (answer != MessageBoxResult.Yes) return;
         _cancelRequested = true;

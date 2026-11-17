@@ -43,6 +43,12 @@ public partial class ErrorWindow : Window
             headline = $"위험한 경로가 들어 있는 파일 {r.BlockedPaths.Count:N0}개를 차단했습니다.";
             advice = "압축 파일 밖의 폴더에 파일을 쓰려는 항목이었습니다. 나머지 파일은 정상적으로 풀었습니다.";
         }
+        else if (r.Failures.All(f => f.Kind == ArchiveErrorKind.Io))
+        {
+            // Disk-side trouble (no permission, name too long, file in use): the archive itself is fine.
+            headline = $"파일 {r.Failures.Count:N0}개를 저장하지 못했습니다.";
+            advice = "풀 위치에 쓸 권한이 있는지, 같은 파일이 다른 프로그램에서 열려 있지 않은지 확인해 주세요. 자세한 이유는 [자세히]에 있습니다.";
+        }
         else
         {
             headline = $"압축 파일이 손상되어 파일 {failed:N0}개를 풀 수 없습니다.";

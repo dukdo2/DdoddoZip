@@ -1,8 +1,9 @@
 # Builds everything into %LOCALAPPDATA%\DdoddoZip.build\out (app + 7z.dll + right-click DLL).
 #   powershell -ExecutionPolicy Bypass -File build.ps1            # Release
 #   powershell -ExecutionPolicy Bypass -File build.ps1 -Test      # also run tests
+#   powershell -ExecutionPolicy Bypass -File build.ps1 -Installer # also make the setup .exe
 # (Messages are in English: Windows PowerShell 5.1 reads BOM-less scripts as ANSI.)
-param([switch]$Test)
+param([switch]$Test, [switch]$Installer)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $env:LOCALAPPDATA 'DdoddoZip.build\out'
@@ -35,3 +36,23 @@ if ($Test) {
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
 }
 "Build done: $out"
+
+# 3. Installer: self-contained publish (no .NET runtime needed on the user's PC) + Inno Setup
+if ($Installer) {
+    $dist = Join-Path $env:LOCALAPPDATA 'DdoddoZip.build\dist'
+    $setupOut = Join-Path $env:LOCALAPPDATA 'DdoddoZip.build\installer'
+    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+    foreach ($proj in 'DdoddoZip.App\DdoddoZip.App.csproj', 'DdoddoZip.Cli\DdoddoZip.Cli.csproj') {
+        dotnet publish "$root\src\$proj" -c Release -r win-x64 --self-contained true -o $dist -nologo -v q
+        if ($LASTEXITCODE -ne 0) { throw "Self-contained publish failed: $proj" }
+    }
+    Copy-Item "$obj\DdoddoZip.ShellExt.dll" $dist -Force
+
+    $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") |
+            Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $iscc) { throw 'Inno Setup 6 not found (winget install JRSoftware.InnoSetup).' }
+    $version = (Get-Item "$dist\DdoddoZip.exe").VersionInfo.FileVersion -replace '\.0$', ''
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$dist" "/DOutputDir=$setupOut" "$root\installer\DdoddoZip.iss"
+    if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
+    "Installer: $setupOut\DdoddoZip-$version-setup.exe"
+}

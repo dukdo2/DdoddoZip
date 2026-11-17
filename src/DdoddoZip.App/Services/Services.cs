@@ -84,6 +84,36 @@ public static class TempFiles
         try { if (Directory.Exists(Root)) Directory.Delete(Root, recursive: true); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
+
+    /// <summary>
+    /// Removes what earlier runs left in %TEMP%\DdoddoZip after a crash or a forced close:
+    /// "app-&lt;pid&gt;" folders of processes that are gone, and unpacked TAR files and right-click
+    /// lists older than a day (an unpacked .tar.gz can be many gigabytes).
+    /// </summary>
+    public static void SweepStale()
+    {
+        try
+        {
+            var root = new DirectoryInfo(Path.Combine(Path.GetTempPath(), "DdoddoZip"));
+            if (!root.Exists) return;
+            var alive = Process.GetProcessesByName("DdoddoZip").Select(p => p.Id).ToHashSet();
+            var cutoff = DateTime.UtcNow.AddDays(-1);
+
+            foreach (var dir in root.EnumerateDirectories("app-*"))
+            {
+                if (int.TryParse(dir.Name.AsSpan(4), out var pid) && alive.Contains(pid)) continue;
+                try { dir.Delete(recursive: true); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            }
+            foreach (var file in root.EnumerateFiles())
+            {
+                if (file.LastWriteTimeUtc > cutoff) continue;
+                try { file.Delete(); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
 }
 
 public static class Fmt

@@ -77,11 +77,14 @@ namespace
 
     // File-system paths of the selection. False when anything is not a real file or folder
     // (Control Panel items, libraries, ...), in which case the menu items are hidden.
-    bool GetPaths(IShellItemArray* items, std::vector<std::wstring>& out)
+    // maxItems: the menu text and visibility only need the first few items; asking Explorer for
+    // thousands of paths, six commands in a row, would delay the menu. Invoke reads them all.
+    bool GetPaths(IShellItemArray* items, std::vector<std::wstring>& out, DWORD maxItems = MAXDWORD)
     {
         if (!items) return false;
         DWORD count = 0;
         if (FAILED(items->GetCount(&count)) || count == 0) return false;
+        if (count > maxItems) count = maxItems;
         for (DWORD i = 0; i < count; ++i)
         {
             ComPtr<IShellItem> item;
@@ -242,7 +245,7 @@ namespace
         IFACEMETHODIMP GetTitle(IShellItemArray* items, LPWSTR* name) override
         {
             std::vector<std::wstring> paths;
-            if (!GetPaths(items, paths)) paths.clear();
+            if (!GetPaths(items, paths, 2)) paths.clear(); // the text needs the first item and "one or many"
             std::wstring title = paths.empty() ? std::wstring(L"또또집") : Title(K, paths);
             Trace(L"GetTitle -> " + title);
             return SHStrDupW(title.c_str(), name);
@@ -268,7 +271,7 @@ namespace
         IFACEMETHODIMP GetState(IShellItemArray* items, BOOL, EXPCMDSTATE* state) override
         {
             std::vector<std::wstring> paths;
-            if (!GetPaths(items, paths))
+            if (!GetPaths(items, paths, static_cast<DWORD>(kMaxItemsToInspect)))
             {
                 *state = ECS_HIDDEN;
                 return S_OK;

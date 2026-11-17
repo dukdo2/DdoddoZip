@@ -75,6 +75,10 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
     private ArchiveEntry? _currentEntry;
     private FileStream? _file;
     private OutStreamWrapper? _out;
+    // Folders already made in this run: skips a disk call per file in big archives.
+    private readonly HashSet<string> _createdDirs = new(StringComparer.OrdinalIgnoreCase);
+    private BackgroundWriter? _writer; // made on first use: tests and big files never need it
+    private SpillStream? _spill;
 
     public string? Password { get; private set; }
     public bool PasswordWasAsked { get; private set; }
@@ -144,16 +148,27 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
             var full = item.FullPath;
             if (item.Entry.IsDirectory)
             {
-                Directory.CreateDirectory(full);
+                if (_createdDirs.Add(full))
+                    Directory.CreateDirectory(full);
                 if (item.Entry.Modified is { } dirTime)
                     Directories.Add((full, dirTime));
                 _state = ItemState.Directory;
                 return HResult.S_OK;
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+            var parent = Path.GetDirectoryName(full)!;
+            if (_createdDirs.Add(parent))
+                Directory.CreateDirectory(parent);
 
-            if (File.Exists(full) || Directory.Exists(full))
+            if (_writer?.DiskFull is { } diskFull)
+            {
+                FatalError = new ArchiveException(ArchiveErrorKind.Io,
+                    $"파일을 쓰지 못했습니다 (디스크 공간이 부족할 수 있습니다): {diskFull.Message}", diskFull);
+                return HResult.E_FAIL;
+            }
+
+            _writer?.WaitFor(full); // same name twice in one archive: let the first copy land
+            if (Path.Exists(full))
             {
                 switch (DecideOverwrite(full, item.Entry))
                 {
@@ -162,6 +177,7 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
                         _result.Skipped++;
                         return HResult.S_OK;
                     case OverwriteChoice.Rename:
+                        _writer?.WaitIdle(); // names still in the queue are not on disk yet
                         full = NamePolicy.GetUniqueFilePath(full);
                         break;
                     case OverwriteChoice.Cancel:
@@ -180,8 +196,26 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
                 }
             }
 
-            _file = new FileStream(full, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16);
-            _out = new OutStreamWrapper(_file);
+            if (item.Entry.Size is > 0 and <= (ulong)BackgroundWriter.SmallFileLimit)
+            {
+                // Small file: decode into memory, BackgroundWriter creates it on disk. The size comes
+                // from the archive and can be a lie, so the buffer moves to disk if it grows past the limit.
+                _spill = new SpillStream(full, BackgroundWriter.SmallFileLimit);
+                _out = new OutStreamWrapper(_spill);
+            }
+            else
+            {
+                _file = new FileStream(full, new FileStreamOptions
+                {
+                    Mode = FileMode.Create,
+                    Access = FileAccess.Write,
+                    Share = FileShare.None,
+                    BufferSize = 1 << 16,
+                    // Reserve the space up front for big files (less fragmentation, early "disk full").
+                    PreallocationSize = item.Entry.Size >= (1 << 20) ? (long)item.Entry.Size : 0,
+                });
+                _out = new OutStreamWrapper(_file);
+            }
             _currentPath = full;
             _state = ItemState.Writing;
             outStream = _out;
@@ -233,16 +267,45 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
         var entry = _currentEntry;
         var path = _currentPath;
         var state = _state;
-        CloseFile();
+        var file = _file;
+        _file = null;
+        var spill = _spill;
+        _spill = null;
+        Exception? writeError = _out?.Error;
 
         try
         {
+            if (spill is not null)
+            {
+                if (spill.File is { } spilled)
+                    file = spilled; // grew past the limit: already on disk, finish it like a big file
+                else if (writeError is null && result == OperationResult.Ok && entry is not null && path is not null)
+                    (_writer ??= new BackgroundWriter()).Write(path, entry, spill.TakeMemory()); // the writer disposes it
+                else
+                    spill.Dispose();
+            }
+            bool onDisk = file is not null; // only then is there a half-written file to remove on failure
+            if (file is not null)
+            {
+                if (writeError is null && result == OperationResult.Ok && entry is not null && path is not null)
+                {
+                    try { file.Flush(); } // write errors (disk full) show up here
+                    catch (IOException e) { writeError = e; }
+                    if (writeError is null)
+                        SetTime(file, entry);
+                }
+                try { file.Dispose(); }
+                catch (IOException e) { if (result == OperationResult.Ok) writeError ??= e; }
+                if (writeError is null && result == OperationResult.Ok && path is not null && entry is not null)
+                    ApplyAttributes(path, entry);
+            }
+
             if (entry is null || state is ItemState.Skipped or ItemState.Failed or ItemState.None)
                 return HResult.S_OK;
 
-            if (_out?.Error is { } writeError)
+            if (writeError is not null)
             {
-                TryDelete(path);
+                if (onDisk) TryDelete(path);
                 FatalError = new ArchiveException(ArchiveErrorKind.Io,
                     $"파일을 쓰지 못했습니다 (디스크 공간이 부족할 수 있습니다): {writeError.Message}", writeError);
                 return HResult.E_FAIL;
@@ -251,10 +314,7 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
             if (result == OperationResult.Ok)
             {
                 if (state == ItemState.Writing && path is not null)
-                {
-                    ApplyMetadata(path, entry);
                     _result.FilesWritten++;
-                }
                 else if (state == ItemState.Testing && !entry.IsDirectory)
                 {
                     _result.FilesTested++;
@@ -262,7 +322,7 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
                 return HResult.S_OK;
             }
 
-            if (state == ItemState.Writing)
+            if (state == ItemState.Writing && onDisk)
                 TryDelete(path);
 
             bool maybePassword = entry.IsEncrypted &&
@@ -317,27 +377,50 @@ internal sealed class ExtractCallback : IArchiveExtractCallback, ICryptoGetTextP
         _result.Failures.Add(new ItemFailure(path, kind, message));
     }
 
-    private void CloseFile()
+    /// <summary>
+    /// Waits until every written file is closed. Call once after IInArchive.Extract returns,
+    /// also when it failed, before touching the output folder again.
+    /// </summary>
+    public void FinishWrites()
     {
-        try { _file?.Dispose(); }
-        catch (IOException e) { FatalError ??= e; }
+        try { _file?.Dispose(); } catch (IOException) { }
         _file = null;
+        _spill?.Dispose();
+        _spill = null;
+        if (_writer is null) return;
+        foreach (var (entry, error) in _writer.Finish())
+        {
+            _result.FilesWritten--;
+            _result.Failures.Add(new ItemFailure(entry.Path, ArchiveErrorKind.Io, error.Message));
+        }
+        if (_writer.DiskFull is { } full && FatalError is null)
+            FatalError = new ArchiveException(ArchiveErrorKind.Io,
+                $"파일을 쓰지 못했습니다 (디스크 공간이 부족할 수 있습니다): {full.Message}", full);
     }
 
-    private static void ApplyMetadata(string path, ArchiveEntry entry)
+    /// <summary>
+    /// Sets the modified time through the open handle (after Flush, so no later write changes it).
+    /// Reopening the file by path after closing it waited for the antivirus scan each time.
+    /// </summary>
+    private static void SetTime(FileStream file, ArchiveEntry entry)
+    {
+        if (entry.Modified is not { } m) return;
+        try { File.SetLastWriteTimeUtc(file.SafeFileHandle, m); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { }
+    }
+
+    internal static void ApplyAttributes(string path, ArchiveEntry entry)
     {
         try
         {
-            if (entry.Modified is { } m)
-                File.SetLastWriteTimeUtc(path, m);
-            // Keep only the harmless attributes (read-only, hidden, archive); never "system".
-            var attr = (FileAttributes)(entry.Attributes & 0x23);
+            // Keep only read-only and hidden (new files already have "archive"); never "system".
+            var attr = (FileAttributes)(entry.Attributes & 0x03);
             if (attr != 0 && (entry.Attributes & 0x8000) == 0) // 0x8000: unix permissions in high bits
                 File.SetAttributes(path, attr);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            // Times and attributes are best effort.
+            // Attributes are best effort.
         }
     }
 

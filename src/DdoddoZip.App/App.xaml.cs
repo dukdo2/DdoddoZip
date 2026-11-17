@@ -52,6 +52,7 @@ public partial class App : Application
             return;
         }
 
+        _ = Task.Run(TempFiles.SweepStale);
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         var main = new MainWindow();
         MainWindow = main;

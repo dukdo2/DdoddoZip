@@ -199,8 +199,7 @@ public static class Compressor
             var childPath = archivePath + "\\" + child.Name;
             if (child is DirectoryInfo sub)
             {
-                // Do not follow junctions/symlinks: they can point back up and loop forever.
-                if ((sub.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                if (IsLink(sub)) continue;
                 AddDirectory(sub, childPath, items, destination, ct);
             }
             else if (child is FileInfo file)
@@ -208,6 +207,48 @@ public static class Compressor
                 AddFile(file, childPath, items, destination);
             }
         }
+    }
+
+    /// <summary>
+    /// True for junctions and folder symlinks, which are not followed: they can point back up and
+    /// loop forever. OneDrive folders also carry the "reparse point" attribute (cloud placeholders)
+    /// but are real folders, so the attribute alone must not exclude them.
+    /// </summary>
+    private static bool IsLink(DirectoryInfo dir)
+    {
+        if ((dir.Attributes & FileAttributes.ReparsePoint) == 0) return false;
+        try { return dir.LinkTarget is not null; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return true; }
+    }
+
+    /// <summary>Number and total size of the files that <see cref="Compress"/> would pack.</summary>
+    public static (long Files, long Bytes) Measure(IReadOnlyList<string> sources, CancellationToken ct = default)
+    {
+        long files = 0, bytes = 0;
+        void Walk(DirectoryInfo dir)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                foreach (var child in dir.EnumerateFileSystemInfos())
+                {
+                    if (child is FileInfo f) { files++; bytes += f.Length; }
+                    else if (child is DirectoryInfo d && !IsLink(d)) Walk(d);
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+
+        foreach (var s in sources)
+        {
+            try
+            {
+                if (File.Exists(s)) { files++; bytes += new FileInfo(s).Length; }
+                else if (Directory.Exists(s)) Walk(new DirectoryInfo(s));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+        return (files, bytes);
     }
 
     private static void AddFile(FileInfo file, string archivePath, List<UpdateItem> items, string destination)

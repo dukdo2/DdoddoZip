@@ -51,24 +51,7 @@ public partial class CompressWindow : Window
 
     private async void CountAsync(IReadOnlyList<string> sources)
     {
-        var (files, bytes) = await Task.Run(() =>
-        {
-            long count = 0, size = 0;
-            foreach (var s in sources)
-            {
-                try
-                {
-                    if (File.Exists(s)) { count++; size += new FileInfo(s).Length; }
-                    else if (Directory.Exists(s))
-                    {
-                        var opts = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
-                        foreach (var f in new DirectoryInfo(s).EnumerateFiles("*", opts)) { count++; size += f.Length; }
-                    }
-                }
-                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
-            }
-            return (count, size);
-        });
+        var (files, bytes) = await Task.Run(() => Compressor.Measure(sources)); // same rules as the real run
         SummaryText.Text = $"담길 파일 {files:N0}개 · 전체 {Fmt.Bytes((ulong)bytes)}";
     }
 
