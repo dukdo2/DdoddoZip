@@ -85,6 +85,9 @@ h2 span{display:inline-block;background:var(--accent);color:#fff;border-radius:4
 .alert{display:flex;gap:12px}
 .alert .xx{flex:none;width:28px;height:28px;border-radius:50%;background:var(--danger);color:#fff;display:grid;place-items:center;font-weight:700}
 .alert .ii{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.notes{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:13px;background:var(--pane)}
+.notes ul{margin:4px 0 10px;padding-left:18px}
+.notes .sub{color:var(--sub);font-size:12px;margin-left:6px}
 @media (max-width:520px){.tree{display:none}}
 </style>
 </head>
@@ -145,11 +148,42 @@ h2 span{display:inline-block;background:var(--accent);color:#fff;border-radius:4
         <div class="btns"><span class="btn">취소</span></div>
       </div>
     </div>
-    <div class="win" style="margin-top:16px">
-      <div class="title"><svg><use href="#house"/></svg>업데이트<div class="ctl"><i>✕</i></div></div>
+    <p class="desc" style="margin-top:12px">다 받으면 따로 묻지 않고 설치를 시작합니다 (U4에서 이미 골랐으므로).</p>
+  </section>
+</div>
+
+<div class="row">
+  <section>
+    <h2><span>U4</span>바뀐 점 · 업데이트 전</h2>
+    <p class="desc">띠의 [업데이트]를 누르면 먼저 열립니다. 내용은 GitHub 릴리스 소개글의 "바뀐 점" 구역입니다.</p>
+    <div class="win" style="max-width:480px">
+      <div class="title"><svg><use href="#house"/></svg>또또집 1.1.1 바뀐 점<div class="ctl"><i>✕</i></div></div>
       <div class="body">
-        <div class="alert"><span class="ii">i</span><div><b>설치를 시작합니다.</b><div class="desc" style="margin:2px 0 0">또또집이 잠시 닫혔다가 다시 열립니다. 관리자 확인 창이 뜨면 [예]를 눌러 주세요.</div></div></div>
-        <div class="btns"><span class="btn">나중에</span><span class="btn p">설치</span></div>
+        <div class="notes">
+          <b>1.1.1</b> <span class="sub">2026년 12월 3일</span>
+          <ul><li>7Z 압축이 최대 1.5배 빨라지고 결과 파일이 18% 작아졌습니다</li><li>ZIP 최고 압축이 2배 빨라졌습니다</li><li>큰 TAR.GZ를 열 때 진행률을 보여 줍니다</li></ul>
+          <b>1.1.0</b> <span class="sub">2026년 11월 30일</span>
+          <ul><li>새 버전을 알려 주는 자동 업데이트</li><li>정보 창과 후원 버튼</li></ul>
+        </div>
+        <div class="desc" style="margin:10px 0 0">설치하면 또또집이 잠시 닫혔다가 다시 열립니다.</div>
+        <div class="btns"><span class="btn">나중에</span><span class="btn p">지금 업데이트</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span>U1</span>업데이트한 뒤 첫 실행</h2>
+    <p class="desc">한 번만 나옵니다. [바뀐 점 보기]는 같은 창을 [확인] 버튼만 두고 엽니다.</p>
+    <div class="win">
+      <div class="title"><svg><use href="#house"/></svg>또또집<div class="ctl"><i>─</i><i>☐</i><i>✕</i></div></div>
+      <div class="banner"><span class="grow"><b>1.1.1</b>로 업데이트했습니다.</span><span class="btn s">바뀐 점 보기</span><span class="x">✕</span></div>
+      <div class="drop" style="height:110px"><div>압축할 파일이나 열 압축 파일을 여기에 끌어다 놓으세요</div></div>
+    </div>
+    <div class="win" style="margin-top:16px;max-width:480px">
+      <div class="title"><svg><use href="#house"/></svg>1.1.1에서 바뀐 점<div class="ctl"><i>✕</i></div></div>
+      <div class="body">
+        <div class="notes"><ul><li>7Z 압축이 최대 1.5배 빨라지고 결과 파일이 18% 작아졌습니다</li><li>ZIP 최고 압축이 2배 빨라졌습니다</li><li>큰 TAR.GZ를 열 때 진행률을 보여 줍니다</li></ul></div>
+        <div class="btns"><span class="btn p">확인</span></div>
       </div>
     </div>
   </section>
@@ -165,7 +199,7 @@ h2 span{display:inline-block;background:var(--accent);color:#fff;border-radius:4
         <div class="head"><svg><use href="#house"/></svg><div><b>또또집</b><span>버전 1.1.0 · 광고 없는 가벼운 압축 프로그램</span></div></div>
         <div class="box">
           <h3>업데이트</h3>
-          <div class="line"><span class="grow newv">1.1.1이 나왔습니다.</span><span class="btn p s">업데이트</span></div>
+          <div class="line"><span class="grow newv">1.1.1이 나왔습니다. <span class="lnk">바뀐 점</span></span><span class="btn p s">업데이트</span></div>
           <div class="chk"><i>✓</i>자동으로 업데이트 확인 (하루 한 번)</div>
         </div>
         <div class="box">
