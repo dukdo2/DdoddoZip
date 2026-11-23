@@ -130,6 +130,12 @@ public sealed class CompressOptions
 
     /// <summary>7Z only: also hide file names.</summary>
     public bool EncryptFileNames { get; init; }
+
+    /// <summary>
+    /// Raw engine settings ("qs=on", "mt=8"...) added after the ones the level picks, replacing
+    /// any with the same name. For measuring and tuning; the app does not use it.
+    /// </summary>
+    public IReadOnlyList<string> EngineSettings { get; init; } = [];
 }
 
 public sealed record CompressResult(string OutputPath, int FileCount, ulong SourceBytes, long ArchiveBytes);

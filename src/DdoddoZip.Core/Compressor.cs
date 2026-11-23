@@ -156,6 +156,24 @@ public static class Compressor
                 props.Add(("x", PropVariant.FromUInt32(Math.Max(level, 1))));
                 break;
         }
+
+        // Only the archive builder ("zip", "7z") takes the extra settings, not the TAR step.
+        if (handler is "zip" or "7z" || handler == ArchiveKindInfo.StreamHandler(o.Kind))
+        {
+            foreach (var setting in o.EngineSettings)
+            {
+                var eq = setting.IndexOf('=');
+                var name = eq < 0 ? setting : setting[..eq];
+                var text = eq < 0 ? "" : setting[(eq + 1)..];
+                var value = text.Length == 0 || text.Equals("on", StringComparison.OrdinalIgnoreCase) ? PropVariant.FromBool(true)
+                    : text.Equals("off", StringComparison.OrdinalIgnoreCase) ? PropVariant.FromBool(false)
+                    : uint.TryParse(text, out var n) ? PropVariant.FromUInt32(n)
+                    : PropVariant.FromString(text);
+                var existing = props.FindIndex(p => p.Item1.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (existing >= 0) { var old = props[existing].Item2; old.Clear(); props[existing] = (name, value); }
+                else props.Add((name, value));
+            }
+        }
         return props;
     }
 

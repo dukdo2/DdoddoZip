@@ -190,6 +190,7 @@ namespace DdoddoZip.Cli
             });
             var password = a.Value("-p");
             var encryptNames = a.Flag("--encrypt-names");
+            var engine = a.Values("--engine"); // hidden: raw 7-Zip settings for tuning, e.g. --engine qs=on
             var force = a.Flag("-y");
             var positionals = a.Positionals();
             if (positionals.Count < 2)
@@ -213,7 +214,7 @@ namespace DdoddoZip.Cli
             using var bar = new ConsoleProgress("압축 중");
             var sw = Stopwatch.StartNew();
             var result = Compressor.Compress(positionals.Skip(1).ToList(), dest,
-                new CompressOptions { Kind = kind, Level = level, Password = password, EncryptFileNames = encryptNames }, bar, ct);
+                new CompressOptions { Kind = kind, Level = level, Password = password, EncryptFileNames = encryptNames, EngineSettings = engine }, bar, ct);
             bar.Finish();
             PrintCompressResult(result, sw.Elapsed);
             return ExitCodes.Ok;
