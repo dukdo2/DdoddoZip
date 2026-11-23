@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>또또집 1.1 화면 목업</title>
+<style>
+:root{
+  --accent:#12A38A; --accent-d:#0E8571; --accent-l:#E3F5F1;
+  --bg:#EEF1F4; --win:#FFFFFF; --pane:#F7F8FA; --line:#E1E4E8;
+  --text:#1C1F23; --sub:#626A73; --danger:#C4314B; --kakao:#FEE500;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Segoe UI","맑은 고딕","Malgun Gothic",sans-serif;padding:24px 16px 60px}
+h1{font-size:22px;margin:0 0 4px;max-width:1040px;margin-inline:auto}
+.lead{color:var(--sub);margin:0 auto 24px;max-width:1040px}
+section{max-width:1040px;margin:0 auto 40px}
+h2{font-size:16px;margin:0 0 4px}
+h2 span{display:inline-block;background:var(--accent);color:#fff;border-radius:4px;padding:0 6px;margin-right:6px;font-size:13px}
+.desc{color:var(--sub);margin:0 0 12px;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;max-width:1040px;margin:0 auto 40px}
+.row>section{margin:0;flex:1 1 420px}
+
+.win{background:var(--win);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.08);overflow:hidden}
+.title{display:flex;align-items:center;gap:8px;height:34px;padding:0 0 0 12px;background:var(--pane);font-size:12px}
+.title svg{width:16px;height:16px}
+.title .ctl{margin-left:auto;display:flex}
+.title .ctl i{width:40px;height:34px;display:grid;place-items:center;font-style:normal;color:var(--sub)}
+.body{padding:16px}
+
+.banner{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--accent-l);border-left:3px solid var(--accent);font-size:13px;flex-wrap:wrap}
+.banner .grow{flex:1;min-width:160px}
+.banner .x{color:var(--sub);padding:0 4px}
+.lnk{color:var(--accent-d);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+
+.tb{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.tb b{font-weight:400;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:6px;font-size:13px}
+.tb b em{font-style:normal;width:18px;height:18px;border-radius:4px;background:var(--accent-l);color:var(--accent-d);display:grid;place-items:center;font-size:11px}
+.tb .sep{width:1px;align-self:stretch;background:var(--line);margin:4px}
+.tb .right{margin-left:auto;display:flex;gap:2px}
+.tb .right b{color:var(--sub);font-size:12px;padding:6px 8px}
+.tb .right b.new{outline:2px dashed var(--accent);outline-offset:-2px}
+.heart{color:#E0457B}
+.main{display:flex;height:170px}
+.tree{width:170px;border-right:1px solid var(--line);background:var(--pane);padding:8px;font-size:13px}
+.tree div{padding:3px 6px;border-radius:4px}
+.tree .on{background:var(--accent-l);color:var(--accent-d)}
+.list{flex:1;font-size:13px;padding:6px 10px;color:var(--sub)}
+.status{display:flex;gap:16px;padding:5px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--sub);background:var(--pane)}
+
+.drop{margin:16px;border:2px dashed #BFD9D3;border-radius:12px;height:150px;display:grid;place-items:center;text-align:center;background:#FAFDFC;font-size:13px}
+.recent{margin:0 16px 4px;font-size:13px}
+.recent div{padding:4px 0;border-bottom:1px solid var(--line);color:var(--text)}
+.foot{display:flex;justify-content:flex-end;padding:4px 16px 12px;font-size:12px;color:var(--sub);gap:6px}
+.foot .new{outline:2px dashed var(--accent);outline-offset:3px;border-radius:2px}
+
+.btn{display:inline-block;padding:6px 14px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:13px;white-space:nowrap}
+.btn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.s{padding:3px 10px;font-size:12px}
+.btn.kakao{background:var(--kakao);border-color:var(--kakao);color:#191919;font-weight:600}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+.about{width:420px;max-width:100%}
+.head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.head svg{width:56px;height:56px;flex:none}
+.head b{font-size:18px;display:block}
+.head span{color:var(--sub);font-size:13px}
+.box{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
+.box h3{font-size:13px;margin:0 0 8px;color:var(--sub);font-weight:600}
+.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.line .grow{flex:1}
+.ok{color:var(--sub)}
+.newv{color:var(--accent-d);font-weight:600}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:8px}
+.chk i{width:16px;height:16px;border-radius:4px;background:var(--accent);color:#fff;display:grid;place-items:center;font-style:normal;font-size:11px}
+.give{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.give .btn{flex:1;text-align:center}
+.links{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}
+.states{display:grid;gap:6px;font-size:12px}
+.states div{border:1px dashed var(--line);border-radius:6px;padding:6px 10px}
+
+.prog .bar{height:6px;background:#E3E7EB;border-radius:3px;overflow:hidden;margin:8px 0}
+.prog .bar i{display:block;height:100%;background:var(--accent);width:58%}
+.kv{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.alert{display:flex;gap:12px}
+.alert .xx{flex:none;width:28px;height:28px;border-radius:50%;background:var(--danger);color:#fff;display:grid;place-items:center;font-weight:700}
+.alert .ii{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+@media (max-width:520px){.tree{display:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27957F"/><stop offset="1" stop-color="#0A3A3D"/></linearGradient>
+    <symbol id="house" viewBox="0 0 100 100">
+      <path d="M50 8 L94 48 H84 V92 H16 V48 H6 Z" fill="url(#hg)" stroke-linejoin="round"/>
+      <rect x="26" y="50" width="10" height="10" fill="#E6F4F2"/><rect x="42" y="50" width="10" height="10" fill="#E6F4F2"/>
+      <rect x="58" y="50" width="10" height="10" fill="#E6F4F2"/><rect x="47" y="60" width="9" height="9" fill="#E6F4F2"/>
+      <rect x="44" y="72" width="8" height="8" fill="#E6F4F2"/><rect x="52" y="78" width="8" height="8" fill="#E6F4F2"/>
+      <rect x="56" y="30" width="7" height="7" fill="#A8DCD2"/><rect x="66" y="24" width="7" height="7" fill="#A8DCD2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<h1>또또집 1.1 화면 목업</h1>
+<p class="lead">1.0 화면에 더해지는 것만 그렸습니다. 점선 테두리는 새로 생기는 자리입니다.</p>
+
+<section>
+  <h2><span>U1</span>업데이트 알림 띠 · 압축 파일을 연 화면(S2)</h2>
+  <p class="desc">새 버전이 있을 때만 제목줄 바로 아래에 한 줄. 도구 모음 오른쪽 끝에 [♥ 후원] [정보]가 생깁니다.</p>
+  <div class="win">
+    <div class="title"><svg><use href="#house"/></svg>사진모음.zip - 또또집<div class="ctl"><i>─</i><i>☐</i><i>✕</i></div></div>
+    <div class="banner"><span class="grow"><b>또또집 1.1.1</b>이 나왔습니다.</span><span class="btn p s">업데이트</span><span class="btn s">이 버전 건너뛰기</span><span class="x">✕</span></div>
+    <div class="tb">
+      <b><em>📂</em>열기</b><span class="sep"></span><b><em>⇩</em>풀기</b><b><em>⤓</em>여기에 풀기</b><b><em>✓</em>검사</b><span class="sep"></span><b><em>＋</em>압축하기</b><span class="sep"></span><b><em>가</em>파일명 인코딩</b>
+      <span class="right"><b class="new"><span class="heart">♥</span>후원</b><b class="new">정보</b></span>
+    </div>
+    <div class="main"><div class="tree"><div class="on">사진모음.zip</div><div>　여행</div><div>　가족</div></div><div class="list">이름 · 크기 · 압축 크기 · 수정한 날짜 …</div></div>
+    <div class="status"><span>ZIP</span><span>파일 128개</span><span>암호 없음</span></div>
+  </div>
+</section>
+
+<div class="row">
+  <section>
+    <h2><span>U1</span>빈 화면(S1)에서</h2>
+    <p class="desc">도구 모음이 없는 화면이라 오른쪽 아래에 작은 링크로 둡니다.</p>
+    <div class="win">
+      <div class="title"><svg><use href="#house"/></svg>또또집<div class="ctl"><i>─</i><i>☐</i><i>✕</i></div></div>
+      <div class="banner"><span class="grow"><b>또또집 1.1.1</b>이 나왔습니다.</span><span class="btn p s">업데이트</span><span class="btn s">건너뛰기</span><span class="x">✕</span></div>
+      <div class="drop"><div><div style="font-size:30px;color:var(--accent)">⇩</div>압축할 파일이나 열 압축 파일을 여기에 끌어다 놓으세요</div></div>
+      <div class="recent"><div>최근에 연 압축 파일</div><div>보고서.7z</div></div>
+      <div class="foot"><span class="new"><span class="heart">♥</span> <span class="lnk">후원</span> · <span class="lnk">정보</span></span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span>U2</span>업데이트 받는 중 (S5 재사용)</h2>
+    <p class="desc">다 받으면 해시를 확인하고 설치 여부를 묻습니다.</p>
+    <div class="win prog">
+      <div class="title"><svg><use href="#house"/></svg>또또집 1.1.1 받는 중 (58%)<div class="ctl"><i>✕</i></div></div>
+      <div class="body">
+        <div style="font-size:13px">DdoddoZip-1.1.1-setup.exe</div>
+        <div class="bar"><i></i></div>
+        <div class="kv"><span>25.8 MB / 44.4 MB</span><span>6.2 MB/s · 남은 시간 약 3초</span></div>
+        <div class="btns"><span class="btn">취소</span></div>
+      </div>
+    </div>
+    <div class="win" style="margin-top:16px">
+      <div class="title"><svg><use href="#house"/></svg>업데이트<div class="ctl"><i>✕</i></div></div>
+      <div class="body">
+        <div class="alert"><span class="ii">i</span><div><b>설치를 시작합니다.</b><div class="desc" style="margin:2px 0 0">또또집이 잠시 닫혔다가 다시 열립니다. 관리자 확인 창이 뜨면 [예]를 눌러 주세요.</div></div></div>
+        <div class="btns"><span class="btn">나중에</span><span class="btn p">설치</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="row">
+  <section>
+    <h2><span>A1</span>정보 창</h2>
+    <p class="desc">[정보]나 [♥ 후원]을 누르면 열립니다. 후원 링크가 없는 버튼은 숨깁니다.</p>
+    <div class="win about">
+      <div class="title"><svg><use href="#house"/></svg>또또집 정보<div class="ctl"><i>✕</i></div></div>
+      <div class="body">
+        <div class="head"><svg><use href="#house"/></svg><div><b>또또집</b><span>버전 1.1.0 · 광고 없는 가벼운 압축 프로그램</span></div></div>
+        <div class="box">
+          <h3>업데이트</h3>
+          <div class="line"><span class="grow newv">1.1.1이 나왔습니다.</span><span class="btn p s">업데이트</span></div>
+          <div class="chk"><i>✓</i>자동으로 업데이트 확인 (하루 한 번)</div>
+        </div>
+        <div class="box">
+          <h3>후원</h3>
+          <div style="font-size:13px">또또집은 광고 없이 무료입니다. 도움이 되셨다면 후원해 주세요.</div>
+          <div class="give"><span class="btn kakao">카카오페이로 후원</span><span class="btn"><span class="heart">♥</span> GitHub Sponsors</span></div>
+        </div>
+        <div class="links"><span class="lnk">GitHub 저장소</span><span class="lnk">라이선스</span><span class="lnk">문제 신고 (메일)</span></div>
+        <div class="btns"><span class="btn">닫기</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span>A1</span>업데이트 상태 한 줄</h2>
+    <p class="desc">정보 창 업데이트 구역의 첫 줄은 상황에 따라 바뀝니다.</p>
+    <div class="states">
+      <div class="line"><span class="grow ok">최신 버전입니다.</span><span class="btn s">업데이트 확인</span></div>
+      <div class="line"><span class="grow ok">확인하는 중…</span><span class="btn s" style="opacity:.4">업데이트 확인</span></div>
+      <div class="line"><span class="grow newv">1.1.1이 나왔습니다.</span><span class="btn p s">업데이트</span></div>
+      <div class="line"><span class="grow ok">확인하지 못했습니다. 인터넷 연결을 확인해 주세요.</span><span class="btn s">다시 확인</span></div>
+    </div>
+
+    <h2 style="margin-top:24px"><span>U3</span>업데이트 실패 (S8 재사용)</h2>
+    <div class="win" style="margin-top:8px">
+      <div class="title"><svg><use href="#house"/></svg>업데이트하지 못했습니다<div class="ctl"><i>✕</i></div></div>
+      <div class="body">
+        <div class="alert"><span class="xx">!</span><div><b>받은 파일이 올바르지 않아 지웠습니다.</b><div class="desc" style="margin:2px 0 0">잠시 후 다시 시도해 주세요. 지금 쓰는 또또집은 그대로 쓸 수 있습니다.</div></div></div>
+        <div class="btns"><span class="btn">자세히 ▾</span><span class="btn p">확인</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
