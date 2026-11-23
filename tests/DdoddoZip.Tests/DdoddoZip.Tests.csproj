@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <IsPackable>false</IsPackable>
+    <!-- References the WPF app (update helpers), so the test host needs the desktop runtime. -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,10 +16,14 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- UseWPF drops the implicit System.IO using (it clashes with System.Windows.Shapes.Path). -->
+    <Using Include="System.IO" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DdoddoZip.Core\DdoddoZip.Core.csproj" />
+    <!-- For the update service's parsing helpers (no windows are opened in tests). -->
+    <ProjectReference Include="..\..\src\DdoddoZip.App\DdoddoZip.App.csproj" />
   </ItemGroup>
 
 </Project>

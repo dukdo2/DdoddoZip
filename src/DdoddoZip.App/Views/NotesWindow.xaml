@@ -1,0 +1,18 @@
+<Window x:Class="DdoddoZip.App.Views.NotesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="480">
+    <StackPanel Margin="20,16">
+        <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Background="{StaticResource Pane}">
+            <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto" Padding="12,10">
+                <StackPanel x:Name="Notes" />
+            </ScrollViewer>
+        </Border>
+        <TextBlock x:Name="InstallNote" Style="{StaticResource SubText}" FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap"
+                   Text="설치하면 또또집이 잠시 닫혔다가 다시 열립니다. 관리자 확인 창이 뜨면 [예]를 눌러 주세요." />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="LaterButton" Content="나중에" IsCancel="True" Click="Later_Click" />
+            <Button x:Name="OkButton" Content="지금 업데이트" Style="{StaticResource PrimaryButton}" IsDefault="True" Margin="8,0,0,0" Click="Ok_Click" />
+        </StackPanel>
+    </StackPanel>
+</Window>

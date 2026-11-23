@@ -128,7 +128,7 @@ public static class ShellCommandRunner
 
             var result = await Operation.RunAsync(null, title, (p, ia, ct) =>
             {
-                using var session = ArchiveSession.Open(archive, openOptions, ia, ct);
+                using var session = ArchiveSession.Open(archive, openOptions, ia, ct, p);
                 var r = session.Extract(options, ia, p, ct);
                 return new Outcome(r, session.Entries.Count(e => !e.IsDirectory));
             }, $"{name}: 풀기를 끝내지 못했습니다");

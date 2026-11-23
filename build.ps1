@@ -16,9 +16,9 @@ $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.
 if (-not $vs) { throw 'Visual Studio C++ tools not found (Desktop development with C++).' }
 $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
 $src = Join-Path $root 'src\DdoddoZip.ShellExt'
-$cl = "cl /nologo /O2 /MT /EHsc /std:c++17 /utf-8 /W4 /wd4324 /permissive- /DUNICODE /D_UNICODE /LD " +
+$cl = "cl /nologo /Brepro /O2 /MT /EHsc /std:c++17 /utf-8 /W4 /wd4324 /permissive- /DUNICODE /D_UNICODE /LD " +
       "`"$src\ShellCommands.cpp`" /Fo`"$obj\\`" /link /DEF:`"$src\exports.def`" " +
-      "/OUT:`"$obj\DdoddoZip.ShellExt.dll`" /IMPLIB:`"$obj\DdoddoZip.ShellExt.lib`" shlwapi.lib ole32.lib shell32.lib runtimeobject.lib"
+      "/Brepro /OUT:`"$obj\DdoddoZip.ShellExt.dll`" /IMPLIB:`"$obj\DdoddoZip.ShellExt.lib`" shlwapi.lib ole32.lib shell32.lib runtimeobject.lib"
 Push-Location $obj   # keep any compiler side files out of the caller's folder
 try { cmd /c "`"$vcvars`" >nul 2>nul && $cl" } finally { Pop-Location }
 if ($LASTEXITCODE -ne 0) { throw 'C++ build failed' }
@@ -52,7 +52,10 @@ if ($Installer) {
             Where-Object { Test-Path $_ } | Select-Object -First 1
     if (-not $iscc) { throw 'Inno Setup 6 not found (winget install JRSoftware.InnoSetup).' }
     $version = (Get-Item "$dist\DdoddoZip.exe").VersionInfo.FileVersion -replace '\.0$', ''
-    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$dist" "/DOutputDir=$setupOut" "$root\installer\DdoddoZip.iss"
+    # The right-click DLL is built byte-for-byte the same (/Brepro) while its source is unchanged;
+    # setup replaces it only when this hash differs, so most updates never touch Explorer.
+    $shellHash = (Get-FileHash "$dist\DdoddoZip.ShellExt.dll" -Algorithm SHA256).Hash.ToLowerInvariant()
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$dist" "/DOutputDir=$setupOut" "/DShellExtHash=$shellHash" "$root\installer\DdoddoZip.iss"
     if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
     "Installer: $setupOut\DdoddoZip-$version-setup.exe"
 }

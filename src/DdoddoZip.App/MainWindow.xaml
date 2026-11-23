@@ -15,11 +15,27 @@
         <CommandBinding Command="{x:Static NavigationCommands.BrowseBack}" Executed="Back_Click" />
     </Window.CommandBindings>
 
+    <DockPanel>
+    <!-- U1: update banner (new version available, or just updated) -->
+    <Border x:Name="UpdateBanner" DockPanel.Dock="Top" Visibility="Collapsed" Background="{StaticResource AccentLight}"
+            BorderBrush="{StaticResource Accent}" BorderThickness="3,0,0,0" Padding="12,6">
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Content="✕" Style="{StaticResource ToolButton}" Padding="8,2" Foreground="{StaticResource Sub}"
+                    ToolTip="닫기" Click="BannerClose_Click" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="BannerPrimary" Style="{StaticResource SmallPrimaryButton}" Margin="8,0,0,0" Click="BannerPrimary_Click" />
+                <Button x:Name="BannerSecondary" Style="{StaticResource SmallButton}" Margin="8,0,4,0" Click="BannerSecondary_Click" />
+            </StackPanel>
+            <TextBlock x:Name="BannerText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </DockPanel>
+    </Border>
+
     <Grid>
         <!-- S1: empty state -->
         <Grid x:Name="EmptyView">
             <Grid.RowDefinitions>
                 <RowDefinition />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Border Margin="24,24,24,12" BorderBrush="{StaticResource DropLine}" BorderThickness="2" CornerRadius="12"
@@ -53,12 +69,29 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="24,0,24,12">
+                <StackPanel x:Name="EmptySupport" Orientation="Horizontal">
+                    <TextBlock Text="♥ " Foreground="#E0457B" FontSize="12" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource TextLink}" Content="후원" Click="Support_Click" />
+                    <TextBlock Text="  ·  " Style="{StaticResource SubText}" />
+                </StackPanel>
+                <Button Style="{StaticResource TextLink}" Content="정보" Click="About_Click" />
+            </StackPanel>
         </Grid>
 
         <!-- S2: archive view -->
         <DockPanel x:Name="ArchiveView" Visibility="Collapsed">
             <!-- toolbar -->
             <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="8,6">
+                <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="ToolSupport" Style="{StaticResource ToolButton}" Padding="8,5" Click="Support_Click" ToolTip="또또집 후원하기">
+                        <TextBlock><Run Text="♥ " Foreground="#E0457B" /><Run Text="후원" Foreground="{StaticResource Sub}" /></TextBlock>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Padding="8,5" Click="About_Click" ToolTip="버전, 업데이트, 라이선스">
+                        <TextBlock Text="정보" Foreground="{StaticResource Sub}" />
+                    </Button>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Button Style="{StaticResource ToolButton}" Click="Open_Click" ToolTip="압축 파일 열기 (Ctrl+O)">
                         <StackPanel Orientation="Horizontal"><Border Style="{StaticResource ToolBadge}"><TextBlock Style="{StaticResource ToolBadgeText}" Text="▤" /></Border><TextBlock Text="열기" /></StackPanel>
@@ -93,6 +126,7 @@
                         </Button.ContextMenu>
                     </Button>
                 </StackPanel>
+                </DockPanel>
             </Border>
 
             <!-- address bar -->
@@ -165,4 +199,5 @@
             </Grid>
         </DockPanel>
     </Grid>
+    </DockPanel>
 </Window>

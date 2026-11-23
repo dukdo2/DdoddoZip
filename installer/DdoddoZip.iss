@@ -13,6 +13,9 @@
 #ifndef SourceDir
   #error SourceDir is required
 #endif
+#ifndef ShellExtHash
+  #define ShellExtHash ""
+#endif
 #ifndef OutputDir
   #define OutputDir "."
 #endif
@@ -45,11 +48,11 @@ UninstallDisplayName={#AppName} (DdoddoZip)
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
-; Explorer holds the right-click DLL: let Restart Manager close and reopen it.
-; "yes" (not "force"): the wizard lists the programs and lets the person decide; closing Explorer
-; without asking would also close every open folder window.
+; Close a running 또또집 before replacing it. Only .exe files: Explorer holds the right-click DLL
+; and Restart Manager cannot close it (tested 2026-11-23: three "could not close" boxes), so the
+; DLL is left to "restartreplace" instead, and only when it really changed (ShellExtChanged).
 CloseApplications=yes
-CloseApplicationsFilter=*.exe,*.dll
+CloseApplicationsFilter=*.exe
 RestartApplications=yes
 ChangesAssociations=yes
 
@@ -63,7 +66,7 @@ Name: "desktopicon"; Description: "바탕 화면에 바로 가기 만들기"; Gr
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,DdoddoZip.ShellExt.dll"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; If Explorer still holds the old DLL, replace it at the next restart instead of failing.
-Source: "{#SourceDir}\DdoddoZip.ShellExt.dll"; DestDir: "{app}"; Flags: ignoreversion restartreplace uninsrestartdelete
+Source: "{#SourceDir}\DdoddoZip.ShellExt.dll"; DestDir: "{app}"; Flags: ignoreversion restartreplace uninsrestartdelete; Check: ShellExtChanged
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -74,6 +77,35 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Parameters: "--unregister-shell --user"; Flags: runasoriginaluser runhidden waituntilterminated
 Filename: "{app}\{#AppExe}"; Parameters: "--register-shell"; StatusMsg: "우클릭 메뉴와 연결 프로그램을 등록하는 중..."; Flags: runhidden waituntilterminated
 Filename: "{app}\{#AppExe}"; Description: "또또집 실행"; Flags: nowait postinstall skipifsilent runasoriginaluser
+; Started by the app's auto update ("/SILENT /UPDATE"): reopen 또또집 when done.
+Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: IsAppUpdate
+
+[Code]
+function IsAppUpdate: Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), '/UPDATE') = 0 then
+      Result := True;
+end;
+
+// True unless the installed right-click DLL is already this exact build (same SHA-256).
+function ShellExtChanged: Boolean;
+var
+  Path: String;
+begin
+  Result := True;
+  Path := ExpandConstant('{app}\DdoddoZip.ShellExt.dll');
+  if ('{#ShellExtHash}' = '') or not FileExists(Path) then
+    Exit;
+  try
+    Result := CompareText(GetSHA256OfFile(Path), '{#ShellExtHash}') <> 0;
+  except
+    Result := True;
+  end;
+end;
 
 [UninstallRun]
 Filename: "{app}\{#AppExe}"; Parameters: "--unregister-shell"; RunOnceId: "UnregisterShell"; Flags: runhidden waituntilterminated

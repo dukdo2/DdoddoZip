@@ -10,7 +10,7 @@
     <ArtifactsPath>$(LOCALAPPDATA)\DdoddoZip.build</ArtifactsPath>
     <Company>DdoddoZip</Company>
     <Product>또또집 (DdoddoZip)</Product>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <!-- The UI is Korean only: leave out the .NET/WPF message files for a dozen other languages. -->
     <SatelliteResourceLanguages>ko</SatelliteResourceLanguages>
   </PropertyGroup>

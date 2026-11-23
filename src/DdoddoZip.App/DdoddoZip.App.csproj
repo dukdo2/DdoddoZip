@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\app-source.png" />
     <!-- Icon for archive file types (file association); must be a loose file next to the exe. -->
     <Content Include="Assets\archive.ico" Link="archive.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

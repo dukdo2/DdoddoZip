@@ -20,6 +20,14 @@ public sealed class AppSettings
     public string LastLevel { get; set; } = "Normal";
     public bool OpenFolderAfterExtract { get; set; }
 
+    // F20 auto update
+    public bool AutoCheckUpdates { get; set; } = true;
+    public DateTime? LastUpdateCheckUtc { get; set; }
+    /// <summary>Version the person chose to skip ("이 버전 건너뛰기"), e.g. "1.1.1".</summary>
+    public string? SkippedVersion { get; set; }
+    /// <summary>Version that ran last time: tells the first run after an update apart.</summary>
+    public string? LastRunVersion { get; set; }
+
     public static AppSettings Current { get; } = Load();
 
     private static AppSettings Load()

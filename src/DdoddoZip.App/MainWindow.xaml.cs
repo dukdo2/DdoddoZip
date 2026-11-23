@@ -36,26 +36,193 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ShowRecent();
+        var support = SupportLinks.Any ? Visibility.Visible : Visibility.Collapsed;
+        ToolSupport.Visibility = support;
+        EmptySupport.Visibility = support;
+        Loaded += async (_, _) => await StartupUpdateCheckAsync();
     }
+
+    // ───────────────────────── update (F20) ─────────────────────────
+
+    private enum BannerMode { None, NewVersion, JustUpdated }
+
+    private BannerMode _banner;
+    private List<ReleaseInfo>? _newer;
+    private Version? _updatedFrom;
+
+    /// <summary>
+    /// After the window shows: once after an update, say so; otherwise, at most once a day,
+    /// ask GitHub for a newer version. Failures stay silent (no internet is normal).
+    /// </summary>
+    private async Task StartupUpdateCheckAsync()
+    {
+        var settings = AppSettings.Current;
+        var current = UpdateService.Current;
+        var lastRun = Version.TryParse(settings.LastRunVersion, out var v) ? v : null;
+        settings.LastRunVersion = current.ToString(3);
+        settings.Save();
+
+        if (lastRun is not null && lastRun < current)
+        {
+            _updatedFrom = lastRun;
+            ShowBanner(BannerMode.JustUpdated, $"{current.ToString(3)} 버전으로 업데이트했습니다.");
+            return;
+        }
+
+        if (!UpdateService.DueForCheck(settings)) return;
+        try
+        {
+            var newer = await UpdateService.GetNewerAsync();
+            settings.LastUpdateCheckUtc = DateTime.UtcNow;
+            settings.Save();
+            if (newer.Count > 0 && newer[0].Display != settings.SkippedVersion)
+            {
+                _newer = newer;
+                ShowBanner(BannerMode.NewVersion, $"새 버전이 나왔습니다: 또또집 {newer[0].Display}");
+            }
+        }
+        catch (Exception e) when (e is UpdateException or System.Text.Json.JsonException or OperationCanceledException) { }
+    }
+
+    private void ShowBanner(BannerMode mode, string text)
+    {
+        _banner = mode;
+        BannerText.Text = text;
+        BannerText.FontWeight = FontWeights.SemiBold;
+        if (mode == BannerMode.NewVersion)
+        {
+            BannerPrimary.Content = "업데이트";
+            BannerPrimary.Visibility = Visibility.Visible;
+            BannerSecondary.Content = "이 버전 건너뛰기";
+            BannerSecondary.Style = (Style)FindResource("SmallButton");
+        }
+        else
+        {
+            BannerPrimary.Visibility = Visibility.Collapsed;
+            BannerSecondary.Content = "바뀐 점 보기";
+        }
+        UpdateBanner.Visibility = Visibility.Visible;
+    }
+
+    private void HideBanner()
+    {
+        _banner = BannerMode.None;
+        UpdateBanner.Visibility = Visibility.Collapsed;
+    }
+
+    private async void BannerPrimary_Click(object sender, RoutedEventArgs e)
+    {
+        if (_newer is { Count: > 0 } newer && NotesWindow.AskToUpdate(this, newer))
+            await StartUpdateAsync(newer);
+    }
+
+    private async void BannerSecondary_Click(object sender, RoutedEventArgs e)
+    {
+        if (_banner == BannerMode.NewVersion && _newer is { Count: > 0 } newer)
+        {
+            AppSettings.Current.SkippedVersion = newer[0].Display;
+            AppSettings.Current.Save();
+            HideBanner();
+        }
+        else if (_banner == BannerMode.JustUpdated && _updatedFrom is { } from)
+        {
+            HideBanner();
+            try
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+                var installed = await UpdateService.GetInstalledSinceAsync(from);
+                Mouse.OverrideCursor = null;
+                if (installed.Count > 0) NotesWindow.ShowInstalled(this, installed);
+                else ShellNative.OpenWithShell(UpdateService.RepositoryUrl + "/releases");
+            }
+            catch (Exception ex) when (ex is UpdateException or System.Text.Json.JsonException)
+            {
+                Mouse.OverrideCursor = null;
+                ErrorWindow.Show(this, "바뀐 점", "바뀐 점을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.", ex.Message);
+            }
+        }
+    }
+
+    private void BannerClose_Click(object sender, RoutedEventArgs e) => HideBanner();
+
+    /// <summary>Downloads the newest release (progress window), checks it, starts the setup file and closes.</summary>
+    private async Task StartUpdateAsync(IReadOnlyList<ReleaseInfo> newer)
+    {
+        var release = newer[0];
+        string? setup;
+        try
+        {
+            setup = await Operation.RunAsync(this, $"또또집 {release.Display} 받는 중",
+                (p, _, ct) => UpdateService.DownloadAsync(release, p, ct).GetAwaiter().GetResult(), "업데이트하지 못했습니다");
+        }
+        catch (UpdateException ex)
+        {
+            ErrorWindow.Show(this, "업데이트하지 못했습니다", ex.Message, ex.Details,
+                "지금 쓰는 또또집은 그대로 쓸 수 있습니다.");
+            return;
+        }
+        if (setup is null) return; // cancelled
+#if DEBUG
+        // Development check of the download and hash steps without installing anything.
+        if (Environment.GetEnvironmentVariable("DDZ_NO_INSTALL") == "1")
+        {
+            MessageBox.Show(this, $"받기·해시 확인 완료 (설치는 건너뜀)\n{setup}\n{new FileInfo(setup).Length:N0} bytes", "DDZ_NO_INSTALL");
+            return;
+        }
+#endif
+        try
+        {
+            UpdateService.StartInstaller(setup);
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) // the person said no to the admin prompt
+        {
+            return;
+        }
+        catch (Win32Exception ex)
+        {
+            ErrorWindow.Show(this, "업데이트하지 못했습니다", "설치 파일을 실행하지 못했습니다.", ex.Message);
+            return;
+        }
+        HideBanner();
+        Application.Current.Shutdown();
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e) =>
+        AboutWindow.Show(this, _newer, focusSupport: false, StartUpdateAsync);
+
+    private void Support_Click(object sender, RoutedEventArgs e) =>
+        AboutWindow.Show(this, _newer, focusSupport: true, StartUpdateAsync);
 
     // ───────────────────────── opening ─────────────────────────
 
+    /// <summary>"x.tar.gz" bigger than this opens with the progress window (its TAR is unpacked first).</summary>
+    private const long CompoundTarProgressLimit = 32L * 1024 * 1024;
+
     public async void OpenArchive(string path, int? codePage = null)
     {
+        var options = new ArchiveOpenOptions { CodePage = codePage };
+        _folderIcon ??= ShellNative.GetTypeInfo("folder", isFolder: true).Icon;
+        var folderIcon = _folderIcon;
+
+        // Opening and building the folder tree both run off the UI thread, so archives with
+        // hundreds of thousands of entries do not freeze the window.
+        Opened Load(ArchiveSession s) =>
+            new(s, FolderNode.Build(Path.GetFileName(s.ArchivePath), s.Entries, folderIcon));
+
+        if (ArchiveSession.IsCompoundTar(path) && SafeLength(path) > CompoundTarProgressLimit)
+        {
+            var opened = await Operation.RunAsync(this, $"{Path.GetFileName(path)} 여는 중",
+                (p, ia, ct) => Load(ArchiveSession.Open(path, options, ia, ct, p)), "열 수 없습니다");
+            if (opened is not null) Show(opened, codePage);
+            return;
+        }
+
         Mouse.OverrideCursor = Cursors.Wait;
         try
         {
             var interaction = new WpfInteraction(this);
-            var options = new ArchiveOpenOptions { CodePage = codePage };
-            var session = await Task.Run(() => ArchiveSession.Open(path, options, interaction));
-
-            var old = _session;
-            _session = session;
-            _codePage = codePage;
-            if (old is not null) _ = Task.Run(old.Dispose);
-
-            BuildView();
-            AppSettings.Current.AddRecent(session.ArchivePath);
+            var opened = await Task.Run(() => Load(ArchiveSession.Open(path, options, interaction)));
+            Show(opened, codePage);
         }
         catch (OperationCanceledException)
         {
@@ -77,12 +244,30 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BuildView()
+    private sealed record Opened(ArchiveSession Session, FolderNode Root);
+
+    private static long SafeLength(string path)
+    {
+        try { return new FileInfo(path).Length; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return 0; }
+    }
+
+    private void Show(Opened opened, int? codePage)
+    {
+        var old = _session;
+        _session = opened.Session;
+        _codePage = codePage;
+        if (old is not null) _ = Task.Run(old.Dispose);
+
+        BuildView(opened.Root);
+        AppSettings.Current.AddRecent(opened.Session.ArchivePath);
+    }
+
+    private void BuildView(FolderNode root)
     {
         var session = _session!;
-        _folderIcon ??= ShellNative.GetTypeInfo("folder", isFolder: true).Icon;
         var archiveName = Path.GetFileName(session.ArchivePath);
-        _root = FolderNode.Build(archiveName, session.Entries, _folderIcon);
+        _root = root;
         FolderTree.ItemsSource = new[] { _root };
         _back.Clear();
         _current = null;

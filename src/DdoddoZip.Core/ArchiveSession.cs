@@ -35,11 +35,16 @@ public sealed class ArchiveSession : IDisposable
 
     private ArchiveSession(string path) => ArchivePath = path;
 
+    /// <param name="progress">
+    /// Only reported for "x.tar.gz"-style files, whose inner TAR is unpacked to a temp file while
+    /// opening (minutes for multi-gigabyte files). Other formats open almost at once.
+    /// </param>
     public static ArchiveSession Open(
         string path,
         ArchiveOpenOptions? options = null,
         IArchiveInteraction? interaction = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IProgress<ArchiveProgress>? progress = null)
     {
         options ??= new ArchiveOpenOptions();
         path = Path.GetFullPath(path);
@@ -49,7 +54,7 @@ public sealed class ArchiveSession : IDisposable
         var session = new ArchiveSession(path) { _password = options.Password };
         try
         {
-            session.OpenCore(options, interaction, ct);
+            session.OpenCore(options, interaction, ct, progress);
             return session;
         }
         catch
@@ -59,7 +64,11 @@ public sealed class ArchiveSession : IDisposable
         }
     }
 
-    private void OpenCore(ArchiveOpenOptions options, IArchiveInteraction? interaction, CancellationToken ct)
+    /// <summary>True for names like "a.tar.gz" or "a.tgz": opening them unpacks the inner TAR first.</summary>
+    public static bool IsCompoundTar(string path) =>
+        TarCompoundExtensions.Any(ext => path.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+
+    private void OpenCore(ArchiveOpenOptions options, IArchiveInteraction? interaction, CancellationToken ct, IProgress<ArchiveProgress>? progress)
     {
         var lib = SevenZipLibrary.Instance;
         var (archive, stream, format) = OpenWithLibrary(lib, ArchivePath, options, interaction, ct);
@@ -72,7 +81,7 @@ public sealed class ArchiveSession : IDisposable
         // "a.tar.gz": the gzip holds a single .tar, so open that tar to show the real file list.
         if (StreamFormats.Contains(format.Name) && HoldsSingleTar(archive, ArchivePath))
         {
-            var temp = ExtractSingleStreamToTemp(archive, ct);
+            var temp = ExtractSingleStreamToTemp(archive, ct, progress);
             Close();
             _tempInnerTar = temp;
             var (tarArchive, tarStream, _) = OpenWithLibrary(lib, temp, new ArchiveOpenOptions(), null, ct, onlyFormat: "tar");
@@ -174,7 +183,7 @@ public sealed class ArchiveSession : IDisposable
         return TarCompoundExtensions.Any(ext => archivePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string ExtractSingleStreamToTemp(IInArchive archive, CancellationToken ct)
+    private static string ExtractSingleStreamToTemp(IInArchive archive, CancellationToken ct, IProgress<ArchiveProgress>? progress)
     {
         var dir = Path.Combine(Path.GetTempPath(), "DdoddoZip");
         Directory.CreateDirectory(dir);
@@ -182,7 +191,7 @@ public sealed class ArchiveSession : IDisposable
         var entry = new ArchiveEntry(0, "inner.tar", false, 0, 0, null, false, 0);
         var plan = new Dictionary<uint, (ArchiveEntry, string)> { [0] = (entry, temp) };
         var result = new ExtractResult();
-        var cb = new ExtractCallback("", plan, false, OverwriteMode.Overwrite, null, null, null, result, ct);
+        var cb = new ExtractCallback("", plan, false, OverwriteMode.Overwrite, null, null, progress, result, ct);
         int hr;
         try { hr = archive.Extract([0u], 1, 0, cb); }
         finally { cb.FinishWrites(); }
