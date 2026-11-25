@@ -238,11 +238,11 @@ public static class UpdateService
 /// <summary>Donation links (F23). A null link hides its button; both null hides the section.</summary>
 public static class SupportLinks
 {
-    /// <summary>KakaoPay money-transfer link (qr.kakaopay.com/...). Filled in when the owner makes one.</summary>
+    /// <summary>KakaoPay money-transfer link (qr.kakaopay.com/...). Not used in 1.1 (no link), so its button stays hidden.</summary>
     public static readonly string? KakaoPay = Pick(null);
 
-    /// <summary>GitHub Sponsors page. Filled in once the owner's Sponsors profile is approved.</summary>
-    public static readonly string? GitHubSponsors = Pick(null);
+    /// <summary>GitHub Sponsors page.</summary>
+    public static readonly string? GitHubSponsors = Pick("https://github.com/sponsors/dukdo2");
 
     // Debug builds can show the buttons before the real links exist (screen checks): DDZ_TEST_SUPPORT=1.
     private static string? Pick(string? link)
