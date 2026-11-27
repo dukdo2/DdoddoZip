@@ -4,7 +4,7 @@
 
 <h1 align="center">또또집 (DdoddoZip)</h1>
 
-<p align="center">광고 없는 가벼운 윈도우 압축 프로그램<br>한글 파일명이 깨지지 않고, 위험한 압축 파일로부터 PC를 지킵니다.</p>
+<p align="center">광고 없는 가벼운 압축 프로그램</p>
 
 <p align="center">
   <a href="../../releases/latest"><b>설치 파일 내려받기</b></a> ·
